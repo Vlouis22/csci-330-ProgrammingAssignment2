@@ -38,8 +38,12 @@ def send_file(filename: str, address: (str, int)):
         file_name_for_server = file_size_8bytes + filename.encode('utf-8')
         client_socket.sendall(file_name_for_server)
         # TODO: section 2 step 7
-        data, server = client_socket.recvfrom(BUFFER_SIZE)
-        if data != b'go ahead':
+        try:
+            data, server = client_socket.recvfrom(BUFFER_SIZE)
+            print(data.decode('utf-8'))
+            if data != b'go ahead':
+                raise OSError('Bad server response - was not go ahead!')
+        except:
             raise OSError('Bad server response - was not go ahead!')
 
         # open the file to be transferred
@@ -50,11 +54,11 @@ def send_file(filename: str, address: (str, int)):
                 # TODO: section 2 step 8a
                 chunk = file.read(BUFFER_SIZE)
                 # TODO: section 2 step 8b
-                if len(chunk) == 0:
+                if len(chunk) > 0:
+                    client_socket.sendall(chunk)
+                else:
                     is_done = False
                     
-        client_socket.close()
-
     except OSError as e:
         ret_value = 2
         print(f'An error occurred while sending the file:\n\t{e}')
